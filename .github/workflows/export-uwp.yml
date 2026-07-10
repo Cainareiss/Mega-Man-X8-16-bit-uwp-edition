@@ -30,11 +30,24 @@ jobs:
           presets_to_export: "UWP Xbox Series S"
           use_godot_3: true
 
+      - name: Localizar pacote UWP exportado
+        id: find_appx
+        shell: bash
+        run: |
+          appx="$(find "$GITHUB_WORKSPACE" -type f -name '*.appx' | head -n 1)"
+          if [ -z "$appx" ]; then
+            echo "Nenhum .appx encontrado depois da exportacao."
+            find "$GITHUB_WORKSPACE" -maxdepth 4 -type f | sort | tail -200
+            exit 1
+          fi
+          echo "appx_path=$appx" >> "$GITHUB_OUTPUT"
+          echo "Pacote encontrado: $appx"
+
       - name: Subir o pacote nao assinado como artefato
         uses: actions/upload-artifact@v4
         with:
           name: uwp-package-unsigned
-          path: build/uwp/MegaManX8-16bit.appx
+          path: ${{ steps.find_appx.outputs.appx_path }}
           if-no-files-found: error
 
   # ----------------------------------------------------------------------
