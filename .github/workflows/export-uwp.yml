@@ -29,6 +29,7 @@ jobs:
           archive_output: false
           presets_to_export: "UWP Xbox Series S"
           use_godot_3: true
+          use_preset_export_path: true
 
       - name: Localizar pacote UWP exportado
         id: find_appx
