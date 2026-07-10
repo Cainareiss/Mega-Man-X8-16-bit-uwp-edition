@@ -23,18 +23,18 @@ jobs:
       - name: Exportar projeto para UWP
         uses: firebelley/godot-export@v8.0.0
         with:
-          godot_executable_download_url: https://downloads.tuxfamily.org/godotengine/3.5.3/Godot_v3.5.3-stable_linux_headless.64.zip
-          godot_export_templates_download_url: https://downloads.tuxfamily.org/godotengine/3.5.3/Godot_v3.5.3-stable_export_templates.tpz
+          godot_executable_download_url: https://github.com/godotengine/godot-builds/releases/download/3.5.3-stable/Godot_v3.5.3-stable_linux_headless.64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot-builds/releases/download/3.5.3-stable/Godot_v3.5.3-stable_export_templates.tpz
           relative_project_path: ./
           archive_output: false
-          export_presets_to_export: "UWP Xbox Series S"
+          presets_to_export: "UWP Xbox Series S"
           use_godot_3: true
 
       - name: Subir o pacote nao assinado como artefato
         uses: actions/upload-artifact@v4
         with:
           name: uwp-package-unsigned
-          path: UWP_Export/
+          path: build/uwp/MegaManX8-16bit.appx
           if-no-files-found: error
 
   # ----------------------------------------------------------------------
