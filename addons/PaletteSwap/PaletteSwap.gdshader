@@ -7,14 +7,19 @@ uniform float fps = 6;
 
 void fragment() {
 	vec4 original_color = texture(TEXTURE, UV);
-	ivec3 colori = ivec3(round(original_color.rgb * 255.0));
+	ivec3 colori = ivec3(floor(original_color.rgb * 255.0 + vec3(0.5)));
 	
 	ivec2 color_count = textureSize(palette, 0);
 	
 	float idx = -1.0;
-	for (int i = 0; i < color_count.x; i++) {
+	// ANGLE/UWP requires a compile-time loop bound. Palette textures in this
+	// project are much smaller than 256 columns.
+	for (int i = 0; i < 256; i++) {
+		if (i >= color_count.x) {
+			break;
+		}
 		vec3 color2 = texture(palette, vec2(float(i) / float(color_count.x - 1), 0)).rgb;
-		ivec3 colori2 = ivec3(round(color2 * 255.0));
+		ivec3 colori2 = ivec3(floor(color2 * 255.0 + vec3(0.5)));
 		
 		if (colori == colori2) {
 			idx = float(i);

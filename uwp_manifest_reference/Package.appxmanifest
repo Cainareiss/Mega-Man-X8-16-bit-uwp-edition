@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Package.appxmanifest de referencia - Mega Man X8 16-bit (port UWP / Xbox Series S, Dev Mode)
+
+  COMO USAR:
+  Se voce exportar pelo preset "UWP Xbox Series S" do Godot (export_presets.cfg),
+  o proprio Godot 3.5 ja gera um Package.appxmanifest dentro da pasta de saida,
+  preenchido a partir dos campos "package/*" daquele preset.
+
+  Este arquivo aqui serve como REFERENCIA / FALLBACK para os casos em que:
+   - voce abrir um projeto UWP em branco no Visual Studio (conforme o guia de build)
+     e quiser comparar/colar valores corretos manualmes, ou
+   - o manifesto gerado pelo Godot vier incompleto e precisar de ajuste manual.
+
+  Valores de identidade usados (combinando com export_presets.cfg, preset.3):
+   - Publisher: CN=AlyssonDaPaz
+   - Package Name: AlyssonDaPaz.MegaManX816bit
+   - GUID de teste (Dev Mode/sideload apenas, NAO valido para Microsoft Store):
+     6a145a6d-e1c7-4cfd-b58f-641c7d665436
+
+  IMPORTANTE: o GUID e a Publisher Identity aqui sao apenas para sideload em Dev Mode.
+  Para publicacao na Microsoft Store / Partner Center, esses valores devem vir do
+  registro real do app no Partner Center, e o certificado de assinatura precisa
+  corresponder exatamente ao Publisher declarado.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap mp rescap">
+
+  <Identity
+    Name="AlyssonDaPaz.MegaManX816bit"
+    Publisher="CN=AlyssonDaPaz"
+    Version="1.0.0.0"
+    ProcessorArchitecture="x64" />
+
+  <mp:PhoneIdentity PhoneProductId="6a145a6d-e1c7-4cfd-b58f-641c7d665436" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+
+  <Properties>
+    <DisplayName>Mega Man X8 16-bit</DisplayName>
+    <PublisherDisplayName>AlyssonDaPaz</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <!-- Ajuste MinVersion conforme o SDK do Windows instalado no momento do build.
+         10.0.19041.0 é uma base segura e amplamente compatível em 2026; valide contra
+         a versão do Windows 10/11 SDK que você efetivamente instalou no Visual Studio. -->
+    <TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.19041.0" MaxVersionTested="10.0.19041.0" />
+    <TargetDeviceFamily Name="Windows.Xbox" MinVersion="10.0.19041.0" MaxVersionTested="10.0.19041.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App"
+      Executable="MegaManX8UWP.exe"
+      EntryPoint="MegaManX8UWP.App">
+      <uap:VisualElements
+        DisplayName="Mega Man X8 16-bit"
+        Description="A reimagining of Megaman X8 with SNES styled graphics. Fan-made, non-commercial, not affiliated with CAPCOM."
+        BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile
+          Wide310x150Logo="Assets\Wide310x150Logo.png"
+          Square71x71Logo="Assets\Square71x71Logo.png"
+          Square310x310Logo="Assets\Square310x310Logo.png"
+          ShortName="MegaManX816bit">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo" />
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile>
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="transparent" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!-- Internet (Cliente): mantido por padrão pelo exportador do Godot mesmo
+         em jogos offline; pode ser removido se o jogo não usar rede em nenhuma
+         tela (sem updates remotos, sem telemetria, sem leaderboard online). -->
+    <Capability Name="internetClient" />
+    <!-- gameBarServices/EXT permite integração com o overlay do Xbox (captura,
+         menu Xbox). Não é obrigatório para sideload em Dev Mode, mas evita
+         avisos do Partner Center se algum dia o jogo for submetido à loja. -->
+    <rescap:Capability Name="gameBarServices_EXT" />
+  </Capabilities>
+</Package>

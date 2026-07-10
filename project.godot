@@ -1029,6 +1029,7 @@ GameManager="*res://src/Scripts/GameManager.gd"
 InputManager="*res://src/System/InputManager.gd"
 Savefile="*res://src/System/Savefile.gd"
 ShaderCacheManager="*res://addons/gd-shader-cache/src/ShaderCacheManager.gd"
+UWPCompatibility="*res://src/System/UWPCompatibility.gd"
 Configurations="*res://src/System/GlobalVariables.gd"
 GlobalVariables="*res://src/System/GlobalVariables.gd"
 CRT="*res://src/Screens/CRTManager.gd"
@@ -1041,7 +1042,6 @@ IGT="*res://IGT.gd"
 [debug]
 
 gdscript/warnings/unused_signal=false
-gdscript/warnings/return_value_discarded=false
 
 [display]
 
@@ -1059,7 +1059,7 @@ version_control_plugin_name="GitAPI"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "res://addons/AsepriteWizard/plugin.cfg", "res://addons/gd-shader-cache/plugin.cfg", "res://addons/vnen.tiled_importer/plugin.cfg" )
+enabled=PoolStringArray( "res://addons/gd-shader-cache/plugin.cfg", "res://addons/vnen.tiled_importer/plugin.cfg" )
 
 [global]
 

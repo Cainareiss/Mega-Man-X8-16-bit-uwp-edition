@@ -69,10 +69,12 @@ func direct_hit(damageValue : DamageValue) -> float:
 
 func damage(damage, inflicter) -> float:
 	if should_be_damaged(inflicter):
+		uwp_diag("damage enemy=%s hp_before=%.2f dmg=%.2f inflicter=%s visible=%s alpha=%s flash=%s" % [character.name, character.current_health, damage, inflicter.name if inflicter else "null", str(animatedSprite.visible), str(animatedSprite.material.get_shader_param("Alpha")), str(animatedSprite.material.get_shader_param("Flash"))])
 		reduce_health(damage, inflicter)
 		emit_combo_hit(inflicter)
 		apply_invulnerability_or_death()
 		play_vfx()
+		uwp_diag("after damage enemy=%s hp_after=%.2f visible=%s alpha=%s flash=%s" % [character.name, character.current_health, str(animatedSprite.visible), str(animatedSprite.material.get_shader_param("Alpha")), str(animatedSprite.material.get_shader_param("Flash"))])
 	return character.current_health
 
 func apply_invulnerability_or_death() -> void:
@@ -163,6 +165,11 @@ func play_shader():
 		animatedSprite.material.set_shader_param("Flash", 1)
 		animatedSprite.material.set_shader_param("Should_Blink", 1)
 		i_timer = 0.01
+		uwp_diag("play_shader enemy=%s flash=1 should_blink=1" % character.name)
+
+func uwp_diag(message: String) -> void:
+	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
+		get_node("/root/UWPCompatibility").diag("EnemyDamage.%s" % message)
 
 func not_visible() -> void:
 	#can_get_hit = false

@@ -49,3 +49,16 @@ Thumbs.db
 *.wmv
 
 .import/
+
+# Local/export artifacts
+.tools/
+build/
+*.appx
+*.msix
+*.cer
+*.zip
+godot.log
+uwp_diagnostics*.log
+
+# Local duplicate extracted from the downloaded archive; root contains the edited source.
+Mega-Man-X8-16-bit-main/

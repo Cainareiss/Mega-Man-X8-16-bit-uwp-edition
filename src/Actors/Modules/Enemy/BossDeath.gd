@@ -72,6 +72,8 @@ func _physics_process(_delta: float) -> void:
 			GameManager.unpause(character.name + name)
 			smoke.emitting = true
 			explosions.emitting = true
+			if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
+				get_node("/root/UWPCompatibility").spawn_explosion_burst(global_position, int(explosions.amount), 36.0, 0.8)
 			$audioStreamPlayer2D.play()
 			freeze_over = true
 			tempo = 1

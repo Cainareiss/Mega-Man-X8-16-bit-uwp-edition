@@ -137,3 +137,20 @@ static func raycast(object : Node2D, local_target_position : Vector2, start_posi
 
 static func distance(value1 :float, value2 :float) -> float:
 	return abs(abs(value1) - abs(value2))
+
+# --- Xbox/UWP port helpers ---
+# Godot 3.x's documented way to detect the export platform at runtime is via
+# feature tags (OS.has_feature), not OS.get_name(). "UWP" is the feature tag
+# Godot's exporter attaches to UWP builds. We also check OS.get_name() as a
+# redundant fallback in case the feature tag isn't present in a given build.
+# IMPORTANT: verify this against an actual UWP export running on device/emulator
+# before relying on it for anything player-facing - feature tag behavior should
+# be confirmed empirically, not assumed.
+static func is_uwp_platform() -> bool:
+	return OS.has_feature("UWP") or OS.get_name() == "UWP"
+
+# Convenience alias: anything that doesn't make sense on a closed console
+# (manual window mode toggles, desktop-only display options, etc.) should
+# check this before showing itself or applying its effect.
+static func is_console_platform() -> bool:
+	return is_uwp_platform()

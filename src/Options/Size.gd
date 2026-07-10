@@ -5,16 +5,29 @@ const w_size := "WindowSize"
 var current_multiplier = 1
 
 
+func _ready() -> void:
+	if Tools.is_console_platform():
+		focus_mode = Control.FOCUS_NONE
+		var row = get_parent()
+		if row:
+			row.visible = false
+
 func setup() -> void:
+	if Tools.is_console_platform():
+		return
 	current_multiplier = get_windowsize()
 	display_value(current_multiplier)
 	set_windowsize(current_multiplier)
 
 func increase_value() -> void:
+	if Tools.is_console_platform():
+		return
 	increase_multiplier(1)
 	set_windowsize(current_multiplier)
 	
 func decrease_value() -> void:
+	if Tools.is_console_platform():
+		return
 	increase_multiplier(-1)
 	set_windowsize(current_multiplier)
 

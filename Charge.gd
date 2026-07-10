@@ -171,6 +171,7 @@ func emit_fire_charged_signal(_charged_time):
 
 func start_vfx():
 	Log("Started VFX")
+	uwp_diag("start_vfx charged_time=%.3f level=%d" % [charged_time, get_charge_level()])
 	play_sound(sound, false)
 	emit_charging_particle()
 	enable_charge_shader()
@@ -185,6 +186,7 @@ func stop_vfx():
 	charging = false
 	mid_charge = false
 	max_charge = false
+	uwp_diag("stop_vfx")
 	Log("Stopped VFX")
 
 func play_super_sound():
@@ -199,20 +201,41 @@ func emit_charging_particle():
 	for particle in particles:
 		particle.visible = false
 	charging_particle.visible = true
+	uwp_diag("emit_charging_particle")
+	update_uwp_charge_spirals(charging_particle)
 	
 func emit_charged_particle():
 	for particle in particles:
 		particle.visible = false
 	charged_particle.visible = true
+	uwp_diag("emit_charged_particle")
+	update_uwp_charge_spirals(charged_particle)
 	
 func emit_supercharge_particle():
 	for particle in particles:
 		particle.visible = false
 	super_particle.visible = true
+	uwp_diag("emit_supercharge_particle")
+	update_uwp_charge_spirals(super_particle)
 	
 func stop_emission():
 	for particle in particles:
 		particle.visible = false
+	update_uwp_charge_spirals(null)
+
+func update_uwp_charge_spirals(active_particle) -> void:
+	if not has_node("/root/UWPCompatibility"):
+		return
+	var compatibility = get_node("/root/UWPCompatibility")
+	if not compatibility.is_active():
+		return
+	compatibility.diag("charge update active=%s charge=%.3f level=%d executing=%s" % [active_particle.name if active_particle else "none", charged_time, get_charge_level(), str(executing)])
+	for particle in particles:
+		compatibility.set_charge_spiral_visible(particle, particle == active_particle)
+
+func uwp_diag(message: String) -> void:
+	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
+		get_node("/root/UWPCompatibility").diag("Charge.%s" % message)
 
 func change_color(_color):
 	character.animatedSprite.material.set_shader_param("Color", _color)

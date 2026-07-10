@@ -6,6 +6,8 @@ func _Setup():
 		audioplayer.play()
 	Event.emit_signal("enemy_kill",character)
 	explosions.emitting = true
+	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
+		get_node("/root/UWPCompatibility").spawn_explosion_burst(global_position, int(explosions.amount), 30.0, min(explosion_duration, 0.75))
 	sprite.play("defeat_fall")
 	force_move
 	#sprite.playing = false
