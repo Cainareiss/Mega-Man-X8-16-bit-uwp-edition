@@ -33,11 +33,13 @@ func _draw() -> void:
 		draw_circle(Vector2.ZERO, (10.0 + age * 35.0) * size_scale, Color(1.0, 0.85, 0.25, fallback_alpha))
 		draw_circle(Vector2.ZERO, (5.0 + age * 20.0) * size_scale, Color(1.0, 1.0, 1.0, fallback_alpha))
 		return
-	var size := texture.get_size() / Vector2(columns, columns)
+	var safe_columns := int(max(columns, 1))
+	var safe_rows := max(int(ceil(float(frames) / float(safe_columns))), 1)
+	var size := texture.get_size() / Vector2(safe_columns, safe_rows)
 	if size.x <= 0.0 or size.y <= 0.0:
 		return
-	var col := frame % columns
-	var row := int(frame / columns)
+	var col := frame % safe_columns
+	var row := int(frame / safe_columns)
 	var src := Rect2(Vector2(col, row) * size, size)
 	var alpha := clamp(1.0 - age / max(lifetime, 0.001), 0.0, 1.0)
 	var draw_size := size * size_scale

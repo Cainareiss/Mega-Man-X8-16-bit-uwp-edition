@@ -207,22 +207,25 @@ uniform sampler2D palette;
 uniform bool skip_first_row = true;
 uniform bool use_palette_alpha = false;
 uniform float fps = 6.0;
+uniform float palette_columns = 16.0;
+uniform float palette_rows = 16.0;
 void fragment() {
 	vec4 original = texture(TEXTURE, UV);
 	ivec3 source_color = ivec3(floor(original.rgb * 255.0 + vec3(0.5)));
-	ivec2 palette_size = textureSize(palette, 0);
+	float columns = max(palette_columns, 1.0);
+	float rows_total = max(palette_rows, 1.0);
 	float index = -1.0;
 	for (int i = 0; i < 256; i++) {
-		if (i >= palette_size.x) { break; }
-		vec3 sample_color = texture(palette, vec2(float(i) / float(max(palette_size.x - 1, 1)), 0.0)).rgb;
+		if (float(i) >= columns) { break; }
+		vec3 sample_color = texture(palette, vec2(float(i) / max(columns - 1.0, 1.0), 0.0)).rgb;
 		ivec3 candidate = ivec3(floor(sample_color * 255.0 + vec3(0.5)));
 		if (all(equal(source_color, candidate))) { index = float(i); break; }
 	}
 	if (index >= 0.0) {
 		float first_row = float(skip_first_row);
-		float rows = max(float(palette_size.y - 1) - first_row, 1.0);
-		vec2 palette_uv = vec2(index / float(max(palette_size.x - 1, 1)),
-			(mod(TIME * fps, rows) + first_row) / float(max(palette_size.y - 1, 1)));
+		float rows = max((rows_total - 1.0) - first_row, 1.0);
+		vec2 palette_uv = vec2(index / max(columns - 1.0, 1.0),
+			(mod(TIME * fps, rows) + first_row) / max(rows_total - 1.0, 1.0));
 		vec4 replacement = texture(palette, palette_uv);
 		COLOR = vec4(replacement.rgb, mix(original.a, replacement.a, float(use_palette_alpha))) * COLOR;
 	} else {
@@ -310,6 +313,7 @@ func _replace_incompatible_material(node: Node) -> void:
 	var material := node.material as ShaderMaterial
 	if not material.shader:
 		return
+	_configure_palette_size(material)
 	match material.shader.resource_path:
 		"res://src/Actors/charge_shader.tres":
 			material.shader = _charge_shader
@@ -324,4 +328,14 @@ func _replace_incompatible_material(node: Node) -> void:
 				material.set_shader_param("wave", 0.01)
 			else:
 				material.shader = _palette_shader
+				_configure_palette_size(material)
 			_replaced += 1
+
+func _configure_palette_size(material: ShaderMaterial) -> void:
+	if not material:
+		return
+	var palette = material.get_shader_param("palette")
+	if palette and palette is Texture:
+		var size: Vector2 = palette.get_size()
+		material.set_shader_param("palette_columns", max(size.x, 1.0))
+		material.set_shader_param("palette_rows", max(size.y, 1.0))
