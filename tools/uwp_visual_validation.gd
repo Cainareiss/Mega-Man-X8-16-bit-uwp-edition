@@ -19,13 +19,24 @@ func _run() -> void:
 		return
 	_check(compatibility.is_active(), "UWP compatibility test mode is not active")
 
-	var charge_source := Particles2D.new()
-	charge_source.name = "ChargingParticle"
-	charge_source.position = Vector2(105, 112)
-	charge_source.visible = true
-	charge_source.emitting = false
-	charge_source.texture = load("res://src/Effects/Textures/charge_1.png")
-	add_child(charge_source)
+	# Add the source as part of a PackedScene so node_added fires while Godot is
+	# still mounting a child tree, exactly like the real Player.tscn path.
+	var packed_charge := PackedScene.new()
+	var charge_carrier := Node2D.new()
+	charge_carrier.name = "ChargeCarrier"
+	var packed_charge_source := Particles2D.new()
+	packed_charge_source.name = "ChargingParticle"
+	packed_charge_source.position = Vector2(105, 112)
+	packed_charge_source.visible = true
+	packed_charge_source.emitting = false
+	packed_charge_source.texture = load("res://src/Effects/Textures/charge_1.png")
+	charge_carrier.add_child(packed_charge_source)
+	packed_charge_source.owner = charge_carrier
+	packed_charge.pack(charge_carrier)
+	charge_carrier.free()
+	var charge_instance = packed_charge.instance()
+	add_child(charge_instance)
+	var charge_source = charge_instance.get_node("ChargingParticle")
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
 	compatibility.set_charge_spiral_visible(charge_source, true)
@@ -49,6 +60,19 @@ func _run() -> void:
 				animated_explosion_count += 1
 	_check(explosion_count == 5, "Expected 5 CPU explosions, got %d" % explosion_count)
 	_check(animated_explosion_count == explosion_count, "CPU explosion frames did not advance")
+
+	var sequence_source := Node2D.new()
+	sequence_source.name = "LargeEnemyDeath"
+	sequence_source.position = Vector2(290, 112)
+	add_child(sequence_source)
+	compatibility.spawn_explosion_sequence(sequence_source, 8, 18.0, 0.9, 0.55, 2.0, load("res://src/Effects/Textures/explosion.png"))
+	yield(get_tree(), "idle_frame")
+	var sequence = get_node_or_null("UWP Explosion Sequence")
+	_check(sequence != null, "Sustained large-enemy explosion sequence was not created")
+	var sequence_timer := get_tree().create_timer(0.32)
+	yield(sequence_timer, "timeout")
+	if sequence:
+		_check(sequence._spawned >= 2, "Large-enemy explosions did not continue over time")
 
 	yield(VisualServer, "frame_post_draw")
 	_save_screenshot()

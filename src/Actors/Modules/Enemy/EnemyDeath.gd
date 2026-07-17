@@ -35,12 +35,10 @@ func _Setup():
 	explosions.emitting = true
 	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
 		var quick_death := explosion_duration <= 0.05
-		var fallback_amount := 5 if quick_death else int(max(8, min(explosions.amount, 12)))
-		var fallback_spread := 9.0 if quick_death else 18.0
-		var fallback_duration := 0.35 if quick_death else max(min(explosion_duration, 0.8), 0.55)
-		var fallback_scale := 0.42 if quick_death else 0.72
-		var fallback_delay := 0.0 if quick_death else min(explosion_duration * 0.55, 0.7)
-		get_node("/root/UWPCompatibility").spawn_explosion_burst(global_position, fallback_amount, fallback_spread, fallback_duration, fallback_scale, fallback_delay)
+		var fallback_amount := 5 if quick_death else int(explosions.amount)
+		var fallback_spread := 9.0 if quick_death else get_explosion_spread(25.0)
+		var fallback_scale := 0.42 if quick_death else 1.0
+		get_node("/root/UWPCompatibility").spawn_explosion_sequence(self, fallback_amount, fallback_spread, explosion_duration, fallback_scale, explosions.lifetime, explosions.texture)
 	sprite.playing = false
 	sprite.material.set_shader_param("Alpha_Blink", 1)
 	extra_actions_at_death_start()
@@ -107,3 +105,10 @@ func emit_remains_particles():
 		character.get_parent().add_child(particle)
 		particle.global_transform = character.global_transform
 		particle.start()
+
+func get_explosion_spread(default_spread := 25.0) -> float:
+	if explosions and explosions.process_material is ParticlesMaterial:
+		var radius := float(explosions.process_material.emission_sphere_radius)
+		if radius > 0.0:
+			return clamp(radius, 8.0, 90.0)
+	return default_spread

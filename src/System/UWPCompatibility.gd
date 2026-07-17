@@ -13,6 +13,7 @@ var _particle_bridges := []
 var _charge_spirals := {}
 var _charge_spiral_script := preload("res://src/System/UWPChargeSpiral.gd")
 var _sprite_explosion_script := preload("res://src/System/UWPSpriteExplosion.gd")
+var _explosion_sequence_script := preload("res://src/System/UWPExplosionSequence.gd")
 var _explosion_texture := preload("res://src/Effects/Textures/explosion.png")
 var _active := false
 var _log_path := "user://uwp_diagnostics.log"
@@ -70,15 +71,18 @@ func set_charge_spiral_visible(source: Node, is_visible: bool) -> void:
 		_charge_spirals[key].set_active(is_visible)
 		diag("charge spiral visible source=%s visible=%s source_visible=%s z=%s" % [source.name, str(is_visible), str(source.visible), str(source.z_index)])
 
-func spawn_explosion_burst(world_position: Vector2, amount := 15, spread := 25.0, duration := 0.6, size_scale := 1.0, delay := 0.0) -> void:
+func spawn_explosion_burst(world_position: Vector2, amount := 15, spread := 25.0, duration := 0.6, size_scale := 1.0, delay := 0.0, texture_override = null) -> void:
 	if not _active:
 		return
 	if delay > 0.0:
 		var timer := Timer.new()
 		timer.one_shot = true
 		timer.wait_time = delay
-		timer.connect("timeout", self, "_on_delayed_explosion_burst", [timer, world_position, amount, spread, duration, size_scale])
-		get_tree().root.add_child(timer)
+		timer.connect("timeout", self, "_on_delayed_explosion_burst", [timer, world_position, amount, spread, duration, size_scale, texture_override])
+		var timer_parent := get_tree().current_scene
+		if not timer_parent:
+			timer_parent = get_tree().root
+		timer_parent.add_child(timer)
 		timer.start()
 		return
 	duration = max(duration, 0.55)
@@ -91,7 +95,7 @@ func spawn_explosion_burst(world_position: Vector2, amount := 15, spread := 25.0
 		var part := Node2D.new()
 		part.set_script(_sprite_explosion_script)
 		root.add_child(part)
-		part.set("texture", _explosion_texture)
+		part.set("texture", texture_override if texture_override else _explosion_texture)
 		part.global_position = world_position + Vector2(rand_range(-spread, spread), rand_range(-spread, spread))
 		part.z_as_relative = false
 		part.z_index = 100
@@ -99,10 +103,35 @@ func spawn_explosion_burst(world_position: Vector2, amount := 15, spread := 25.0
 		part.set("lifetime", duration)
 		part.set("size_scale", size_scale)
 
-func _on_delayed_explosion_burst(timer: Timer, world_position: Vector2, amount: int, spread: float, duration: float, size_scale: float) -> void:
+func _on_delayed_explosion_burst(timer: Timer, world_position: Vector2, amount: int, spread: float, duration: float, size_scale: float, texture_override) -> void:
 	if is_instance_valid(timer):
 		timer.queue_free()
-	spawn_explosion_burst(world_position, amount, spread, duration, size_scale, 0.0)
+	spawn_explosion_burst(world_position, amount, spread, duration, size_scale, 0.0, texture_override)
+
+func spawn_explosion_sequence(source: Node2D, particle_amount: int, spread: float, total_duration: float, size_scale := 1.0, particle_lifetime := 2.0, texture_override = null) -> void:
+	if not _active or not is_instance_valid(source):
+		return
+	if total_duration <= 0.1:
+		spawn_explosion_burst(source.global_position, min(max(particle_amount, 1), 5), spread, 0.55, size_scale, 0.0, texture_override)
+		return
+	var sequence := Node.new()
+	sequence.name = "UWP Explosion Sequence"
+	sequence.set_script(_explosion_sequence_script)
+	sequence.set("compatibility", self)
+	sequence.set("source", source)
+	sequence.set("world_position", source.global_position)
+	sequence.set("spread", spread)
+	sequence.set("total_duration", total_duration)
+	sequence.set("size_scale", size_scale)
+	sequence.set("texture", texture_override if texture_override else _explosion_texture)
+	var emission_rate := clamp(float(max(particle_amount, 1)) / max(particle_lifetime, 0.1), 1.0, 14.0)
+	sequence.set("emission_rate", emission_rate)
+	sequence.set("max_explosions", min(int(ceil(emission_rate * total_duration)), 160))
+	var root := get_tree().current_scene
+	if not root:
+		root = get_tree().root
+	root.call_deferred("add_child", sequence)
+	diag("spawn explosion sequence source=%s amount=%d rate=%.2f duration=%.2f spread=%.2f scale=%.2f" % [source.name, particle_amount, emission_rate, total_duration, spread, size_scale])
 
 func is_active() -> bool:
 	return _active
@@ -304,7 +333,7 @@ func _create_charge_spiral(gpu: Particles2D) -> void:
 	var root := get_tree().current_scene
 	if not root:
 		root = get_tree().root
-	root.add_child(spiral)
+	root.call_deferred("add_child", spiral)
 	spiral.set("source", gpu)
 	spiral.set("texture", gpu.texture)
 	if gpu.name == "ChargedParticle":

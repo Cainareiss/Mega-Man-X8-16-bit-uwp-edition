@@ -7,7 +7,7 @@ func _Setup():
 	Event.emit_signal("enemy_kill",character)
 	explosions.emitting = true
 	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
-		get_node("/root/UWPCompatibility").spawn_explosion_burst(global_position, int(explosions.amount), 30.0, min(explosion_duration, 0.75))
+		get_node("/root/UWPCompatibility").spawn_explosion_sequence(self, int(explosions.amount), get_explosion_spread(30.0), explosion_duration, 1.0, explosions.lifetime, explosions.texture)
 	sprite.play("defeat_fall")
 	force_move
 	#sprite.playing = false
