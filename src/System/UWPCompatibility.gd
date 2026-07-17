@@ -7,7 +7,6 @@ extends Node
 var _charge_shader := Shader.new()
 var _enemy_shader := Shader.new()
 var _palette_shader := Shader.new()
-var _waterfall_shader := Shader.new()
 var _replaced := 0
 var _particle_bridges := []
 var _charge_spirals := {}
@@ -266,17 +265,6 @@ void fragment() {
 	}
 }"""
 
-	_waterfall_shader.code = """shader_type canvas_item;
-uniform float speed = 0.75;
-uniform float wave = 0.012;
-void fragment() {
-	vec2 uv = UV;
-	uv.y = fract(uv.y - TIME * speed);
-	uv.x += sin((uv.y + TIME * 0.5) * 18.0) * wave;
-	vec4 tex = texture(TEXTURE, uv);
-	COLOR = tex * COLOR;
-}"""
-
 func _on_node_added(node: Node) -> void:
 	_disable_shader_cache(node)
 	_replace_incompatible_material(node)
@@ -385,13 +373,11 @@ func _replace_incompatible_material(node: Node) -> void:
 			material.shader = _enemy_shader
 			_replaced += 1
 		"res://addons/PaletteSwap/PaletteSwap.gdshader":
-			if material.resource_path == "res://src/Effects/Materials/mat_waterfall.tres":
-				material.shader = _waterfall_shader
-				material.set_shader_param("speed", 0.9)
-				material.set_shader_param("wave", 0.01)
-			else:
-				material.shader = _palette_shader
-				_configure_palette_size(material)
+			# The original waterfall does not scroll its texture. Its apparent
+			# downward flow comes from cycling waterfall_palette.png at 24 FPS.
+			# Use the same palette path for UWP so direction and cadence match.
+			material.shader = _palette_shader
+			_configure_palette_size(material)
 			_replaced += 1
 
 func _configure_palette_size(material: ShaderMaterial) -> void:

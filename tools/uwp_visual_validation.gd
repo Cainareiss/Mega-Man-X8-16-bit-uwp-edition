@@ -19,6 +19,20 @@ func _run() -> void:
 		return
 	_check(compatibility.is_active(), "UWP compatibility test mode is not active")
 
+	var waterfall := Sprite.new()
+	waterfall.name = "WaterfallPaletteValidation"
+	waterfall.position = Vector2(-1000, -1000)
+	waterfall.texture = load("res://src/Levels/NoahsPark/tiled_waterfall1.png")
+	# Keep the original Shader resource reference so this follows the exact
+	# resource_path-based replacement used by the exported scene.
+	waterfall.material = load("res://src/Effects/Materials/mat_waterfall.tres").duplicate(false)
+	add_child(waterfall)
+	yield(get_tree(), "idle_frame")
+	_check(waterfall.material.shader == compatibility._palette_shader, "Waterfall did not use the GLES2 palette animation")
+	_check(is_equal_approx(float(waterfall.material.get_shader_param("fps")), 24.0), "Waterfall palette animation lost its original 24 FPS cadence")
+	_check(float(waterfall.material.get_shader_param("palette_columns")) > 1.0, "Waterfall palette width was not configured")
+	_check(float(waterfall.material.get_shader_param("palette_rows")) > 1.0, "Waterfall palette rows were not configured")
+
 	# Add the source as part of a PackedScene so node_added fires while Godot is
 	# still mounting a child tree, exactly like the real Player.tscn path.
 	var packed_charge := PackedScene.new()
@@ -76,7 +90,8 @@ func _run() -> void:
 
 	yield(VisualServer, "frame_post_draw")
 	_save_screenshot()
-	yield(_validate_game_scenes(), "completed")
+	if OS.get_environment("MMX_UWP_QUICK_TEST") != "1":
+		yield(_validate_game_scenes(), "completed")
 	_finish()
 
 func _validate_game_scenes() -> GDScriptFunctionState:
