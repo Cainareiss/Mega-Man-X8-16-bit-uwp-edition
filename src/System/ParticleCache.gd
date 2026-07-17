@@ -12,6 +12,10 @@ func _ready() -> void:
 
 func cache_materials(debug = false) -> void:
 	_show_debug_messages = debug
+	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
+		print("Cache: Skipped GPU particle warm-up on UWP/GLES2 compatibility mode.")
+		finish_caching()
+		return
 	
 	for file in get_files(folder):
 		add_material_to_cache(file)
@@ -21,6 +25,7 @@ func cache_materials(debug = false) -> void:
 func add_material_to_cache(file) -> void:
 	var mat = load(folder + "/" + file)
 	var particle := Particles2D.new()
+	particle.set_meta("shader_cache_only", true)
 	Log("Adding to cache: " + file)
 	if mat is ParticlesMaterial:
 		particle.set_process_material(mat)

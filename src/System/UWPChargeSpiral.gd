@@ -6,6 +6,7 @@ var color := Color(0.55, 0.9, 1.0, 1.0)
 var radius := 11.0
 var speed := 8.0
 var phase := 0.0
+var active := false
 var _time := 0.0
 
 func _ready() -> void:
@@ -17,11 +18,17 @@ func _process(delta: float) -> void:
 	if not is_instance_valid(source):
 		queue_free()
 		return
-	visible = source.visible
+	visible = active and source.is_visible_in_tree()
 	global_position = source.global_position
 	z_index = 350
 	_time += delta
 	update()
+
+func set_active(value: bool) -> void:
+	active = value
+	visible = value and is_instance_valid(source) and source.is_visible_in_tree()
+	if value:
+		update()
 
 func _draw() -> void:
 	if not visible:

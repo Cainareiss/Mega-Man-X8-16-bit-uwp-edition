@@ -44,6 +44,8 @@ func _process(_delta: float) -> void:
 			_particle_bridges.remove(index)
 			continue
 		cpu.transform = gpu.transform
+		cpu.visible = gpu.visible
+		cpu.modulate = gpu.modulate
 		cpu.z_index = gpu.z_index
 		cpu.z_as_relative = gpu.z_as_relative
 		if gpu.emitting != bridge.was_emitting:
@@ -65,7 +67,7 @@ func set_charge_spiral_visible(source: Node, is_visible: bool) -> void:
 		else:
 			return
 	if _charge_spirals.has(key) and is_instance_valid(_charge_spirals[key]):
-		_charge_spirals[key].visible = is_visible
+		_charge_spirals[key].set_active(is_visible)
 		diag("charge spiral visible source=%s visible=%s source_visible=%s z=%s" % [source.name, str(is_visible), str(source.visible), str(source.z_index)])
 
 func spawn_explosion_burst(world_position: Vector2, amount := 15, spread := 25.0, duration := 0.6, size_scale := 1.0, delay := 0.0) -> void:
@@ -122,6 +124,8 @@ func _clear_log() -> void:
 		file.close()
 
 func _should_run() -> bool:
+	if OS.get_environment("MMX_UWP_COMPAT_TEST") == "1":
+		return true
 	if OS.has_feature("editor"):
 		return false
 	if OS.has_feature("UWP") or OS.get_name() == "UWP":
@@ -245,6 +249,7 @@ void fragment() {
 }"""
 
 func _on_node_added(node: Node) -> void:
+	_disable_shader_cache(node)
 	_replace_incompatible_material(node)
 	_prepare_cpu_particles(node)
 
@@ -257,10 +262,34 @@ func _replace_incompatible_materials(node: Node) -> void:
 func _prepare_cpu_particles(node: Node) -> void:
 	if !(node is Particles2D) or node.has_meta("uwp_cpu_bridge"):
 		return
+	if _belongs_to_shader_cache(node):
+		return
 	if _is_charge_particle(node):
 		_create_charge_spiral(node)
+		return
 	node.set_meta("uwp_cpu_bridge", true)
 	call_deferred("_create_cpu_particle_bridge", node)
+
+func _belongs_to_shader_cache(node: Node) -> bool:
+	var current := node
+	while is_instance_valid(current):
+		if current.has_meta("shader_cache_only"):
+			return true
+		var script = current.get_script()
+		if script and script.resource_path == "res://addons/gd-shader-cache/src/ShaderCache.gd":
+			return true
+		current = current.get_parent()
+	return false
+
+func _disable_shader_cache(node: Node) -> void:
+	var script = node.get_script()
+	if not script or script.resource_path != "res://addons/gd-shader-cache/src/ShaderCache.gd":
+		return
+	if "active" in node:
+		node.set("active", false)
+	node.visible = false
+	node.set_process(false)
+	diag("disabled scene shader cache node=%s" % node.name)
 
 func _is_charge_particle(node: Node) -> bool:
 	return node.name == "ChargingParticle" or node.name == "ChargedParticle" or node.name == "SuperChargeParticle"
@@ -295,8 +324,13 @@ func _create_cpu_particle_bridge(gpu: Particles2D) -> void:
 	var cpu := CPUParticles2D.new()
 	cpu.name = gpu.name + " UWP CPU"
 	cpu.convert_from_particles(gpu)
+	cpu.texture = gpu.texture
+	cpu.material = gpu.material
 	gpu.get_parent().add_child(cpu)
 	cpu.transform = gpu.transform
+	cpu.visible = gpu.visible
+	cpu.modulate = gpu.modulate
+	cpu.self_modulate = gpu.self_modulate
 	cpu.z_index = gpu.z_index
 	cpu.z_as_relative = gpu.z_as_relative
 	var hidden_color := gpu.self_modulate
