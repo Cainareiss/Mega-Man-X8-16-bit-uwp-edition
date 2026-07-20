@@ -16,3 +16,8 @@ Mega Man X8 16-bit is a free fangame. It is not affiliated, associated, authoriz
 
 Mega Man X and all Mega Man/Rockman material is a property of CAPCOM.
 Please support the offical release.
+
+## UWP/Xbox port documentation
+
+- [Build and manifest configuration guide](docs/Guia_de_Build_e_Configuracao_do_Manifesto_UWP_v2.md)
+- [Lessons learned from the Godot 3 UWP/Xbox port](docs/Licoes_do_Port_Godot3_para_UWP_Xbox.md)
