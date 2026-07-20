@@ -35,32 +35,72 @@ func _run() -> void:
 
 	# Add the source as part of a PackedScene so node_added fires while Godot is
 	# still mounting a child tree, exactly like the real Player.tscn path.
+	var charge_definitions := [
+		{
+			"name": "ChargingParticle",
+			"texture": load("res://src/Effects/Textures/charge_1.png"),
+			"process_material": load("res://src/Effects/Materials/x_charging_particle.tres")
+		},
+		{
+			"name": "ChargedParticle",
+			"texture": load("res://src/Effects/Textures/charge_2.png"),
+			"process_material": load("res://src/Effects/Materials/x_charged_particle.tres")
+		},
+		{
+			"name": "SuperChargeParticle",
+			"texture": load("res://src/Effects/Textures/charge_2.png"),
+			"process_material": load("res://src/Effects/Materials/x_supercharged_particle.tres")
+		}
+	]
 	var packed_charge := PackedScene.new()
 	var charge_carrier := Node2D.new()
 	charge_carrier.name = "ChargeCarrier"
-	var packed_charge_source := Particles2D.new()
-	packed_charge_source.name = "ChargingParticle"
-	packed_charge_source.position = Vector2(105, 112)
-	packed_charge_source.visible = true
-	packed_charge_source.emitting = false
-	packed_charge_source.texture = load("res://src/Effects/Textures/charge_1.png")
-	charge_carrier.add_child(packed_charge_source)
-	packed_charge_source.owner = charge_carrier
+	for charge_index in range(charge_definitions.size()):
+		var definition: Dictionary = charge_definitions[charge_index]
+		var packed_charge_source := Particles2D.new()
+		packed_charge_source.name = definition.name
+		packed_charge_source.position = Vector2(105 + charge_index * 60, 112)
+		packed_charge_source.visible = true
+		packed_charge_source.emitting = false
+		packed_charge_source.lifetime = 0.3
+		packed_charge_source.texture = definition.texture
+		packed_charge_source.material = load("res://src/Effects/Materials/mat_chargeparticle.tres")
+		packed_charge_source.process_material = definition.process_material
+		charge_carrier.add_child(packed_charge_source)
+		packed_charge_source.owner = charge_carrier
 	packed_charge.pack(charge_carrier)
 	charge_carrier.free()
 	var charge_instance = packed_charge.instance()
 	add_child(charge_instance)
-	var charge_source = charge_instance.get_node("ChargingParticle")
 	yield(get_tree(), "idle_frame")
 	yield(get_tree(), "idle_frame")
-	compatibility.set_charge_spiral_visible(charge_source, true)
+	var charge_sources := []
+	for definition in charge_definitions:
+		var charge_source = charge_instance.get_node(definition.name)
+		charge_sources.append(charge_source)
+		compatibility.set_charge_animation_visible(charge_source, true)
 	yield(get_tree(), "idle_frame")
 
-	var spiral = get_node_or_null("ChargingParticle UWP Spiral")
-	_check(spiral != null, "Mega Buster CPU spiral was not created")
-	if spiral:
-		_check(spiral.active, "Mega Buster CPU spiral did not activate")
-		_check(spiral.visible, "Mega Buster CPU spiral is not visible")
+	var first_charge_animation = null
+	for charge_source in charge_sources:
+		var animation_name: String = charge_source.name + " UWP Charge Animation"
+		var charge_animation = charge_instance.get_node_or_null(animation_name)
+		_check(charge_animation != null, "%s original charge atlas was not created" % charge_source.name)
+		if not charge_animation:
+			continue
+		if first_charge_animation == null:
+			first_charge_animation = charge_animation
+		_check(charge_animation.active, "%s original charge atlas did not activate" % charge_source.name)
+		_check(charge_animation.visible, "%s original charge atlas is not visible" % charge_source.name)
+		_check(charge_animation.texture == charge_source.texture, "%s fallback is not using the original texture" % charge_source.name)
+		_check(charge_animation.color == charge_source.process_material.color, "%s fallback lost the original particle color" % charge_source.name)
+		_check(charge_animation.hframes == 4 and charge_animation.vframes == 4, "%s fallback lost the original 4x4 atlas layout" % charge_source.name)
+		_check(is_equal_approx(charge_animation.lifetime, 0.3), "%s fallback lost the original 0.3 second timing" % charge_source.name)
+	if first_charge_animation:
+		var first_charge_frame: int = first_charge_animation.frame
+		var charge_frame_timer := get_tree().create_timer(0.08)
+		yield(charge_frame_timer, "timeout")
+		_check(first_charge_animation.frame != first_charge_frame, "Mega Buster original atlas frames did not advance")
 
 	compatibility.spawn_explosion_burst(Vector2(290, 112), 5, 9.0, 0.65, 0.55)
 	var timer := get_tree().create_timer(0.16)

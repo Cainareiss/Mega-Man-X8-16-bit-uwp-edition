@@ -9,8 +9,8 @@ var _enemy_shader := Shader.new()
 var _palette_shader := Shader.new()
 var _replaced := 0
 var _particle_bridges := []
-var _charge_spirals := {}
-var _charge_spiral_script := preload("res://src/System/UWPChargeSpiral.gd")
+var _charge_animations := {}
+var _charge_animation_script := preload("res://src/System/UWPChargeAnimation.gd")
 var _sprite_explosion_script := preload("res://src/System/UWPSpriteExplosion.gd")
 var _explosion_sequence_script := preload("res://src/System/UWPExplosionSequence.gd")
 var _explosion_texture := preload("res://src/Effects/Textures/explosion.png")
@@ -55,20 +55,24 @@ func _process(_delta: float) -> void:
 			bridge.was_emitting = gpu.emitting
 			_particle_bridges[index] = bridge
 
-func set_charge_spiral_visible(source: Node, is_visible: bool) -> void:
+func set_charge_animation_visible(source: Node, is_visible: bool) -> void:
 	if not _active:
 		return
 	if not is_instance_valid(source):
 		return
 	var key = source.get_instance_id()
-	if not _charge_spirals.has(key):
+	if not _charge_animations.has(key):
 		if source is Particles2D:
-			_create_charge_spiral(source)
+			_create_charge_animation(source)
 		else:
 			return
-	if _charge_spirals.has(key) and is_instance_valid(_charge_spirals[key]):
-		_charge_spirals[key].set_active(is_visible)
-		diag("charge spiral visible source=%s visible=%s source_visible=%s z=%s" % [source.name, str(is_visible), str(source.visible), str(source.z_index)])
+	if _charge_animations.has(key) and is_instance_valid(_charge_animations[key]):
+		_charge_animations[key].set_active(is_visible)
+		diag("charge atlas visible source=%s visible=%s source_visible=%s z=%s" % [source.name, str(is_visible), str(source.visible), str(source.z_index)])
+
+# Keep the previous API available for old cached scenes and diagnostics.
+func set_charge_spiral_visible(source: Node, is_visible: bool) -> void:
+	set_charge_animation_visible(source, is_visible)
 
 func spawn_explosion_burst(world_position: Vector2, amount := 15, spread := 25.0, duration := 0.6, size_scale := 1.0, delay := 0.0, texture_override = null) -> void:
 	if not _active:
@@ -282,7 +286,7 @@ func _prepare_cpu_particles(node: Node) -> void:
 	if _belongs_to_shader_cache(node):
 		return
 	if _is_charge_particle(node):
-		_create_charge_spiral(node)
+		_create_charge_animation(node)
 		return
 	node.set_meta("uwp_cpu_bridge", true)
 	call_deferred("_create_cpu_particle_bridge", node)
@@ -311,29 +315,35 @@ func _disable_shader_cache(node: Node) -> void:
 func _is_charge_particle(node: Node) -> bool:
 	return node.name == "ChargingParticle" or node.name == "ChargedParticle" or node.name == "SuperChargeParticle"
 
-func _create_charge_spiral(gpu: Particles2D) -> void:
-	if gpu.has_meta("uwp_charge_spiral"):
+func _create_charge_animation(gpu: Particles2D) -> void:
+	if gpu.has_meta("uwp_charge_animation"):
 		return
-	gpu.set_meta("uwp_charge_spiral", true)
-	var spiral := Node2D.new()
-	spiral.name = gpu.name + " UWP Spiral"
-	spiral.set_script(_charge_spiral_script)
-	var root := get_tree().current_scene
-	if not root:
-		root = get_tree().root
-	root.call_deferred("add_child", spiral)
-	spiral.set("source", gpu)
-	spiral.set("texture", gpu.texture)
-	if gpu.name == "ChargedParticle":
-		spiral.set("color", Color(1.0, 0.92, 0.35, 1.0))
-		spiral.set("radius", 13.0)
-		spiral.set("speed", 10.0)
-	elif gpu.name == "SuperChargeParticle":
-		spiral.set("color", Color(1.0, 1.0, 1.0, 1.0))
-		spiral.set("radius", 15.0)
-		spiral.set("speed", 12.0)
-	_charge_spirals[gpu.get_instance_id()] = spiral
-	diag("created charge spiral source=%s texture=%s parent=%s visible=%s global=%s" % [gpu.name, str(gpu.texture), gpu.get_parent().name, str(gpu.visible), str(gpu.global_position)])
+	gpu.set_meta("uwp_charge_animation", true)
+	var animation := Node2D.new()
+	animation.name = gpu.name + " UWP Charge Animation"
+	animation.set_script(_charge_animation_script)
+	animation.set("source", gpu)
+	animation.set("texture", gpu.texture)
+	animation.set("lifetime", gpu.lifetime)
+	if gpu.material is CanvasItemMaterial:
+		var particle_canvas_material := gpu.material as CanvasItemMaterial
+		if particle_canvas_material.particles_animation:
+			animation.set("hframes", particle_canvas_material.particles_anim_h_frames)
+			animation.set("vframes", particle_canvas_material.particles_anim_v_frames)
+	if gpu.process_material is ParticlesMaterial:
+		var particle_material := gpu.process_material as ParticlesMaterial
+		animation.set("color", particle_material.color)
+		animation.set("lifetime_randomness", particle_material.lifetime_randomness)
+	var parent := gpu.get_parent()
+	if is_instance_valid(parent):
+		parent.call_deferred("add_child", animation)
+	else:
+		get_tree().root.call_deferred("add_child", animation)
+	var hidden_color := gpu.self_modulate
+	hidden_color.a = 0.0
+	gpu.self_modulate = hidden_color
+	_charge_animations[gpu.get_instance_id()] = animation
+	diag("created original charge atlas source=%s texture=%s frames=%dx%d lifetime=%.3f color=%s" % [gpu.name, str(gpu.texture), animation.hframes, animation.vframes, animation.lifetime, str(animation.color)])
 
 func _create_cpu_particle_bridge(gpu: Particles2D) -> void:
 	if not is_instance_valid(gpu) or not is_instance_valid(gpu.get_parent()):

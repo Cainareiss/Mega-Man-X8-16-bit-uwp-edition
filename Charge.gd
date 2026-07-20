@@ -202,28 +202,28 @@ func emit_charging_particle():
 		particle.visible = false
 	charging_particle.visible = true
 	uwp_diag("emit_charging_particle")
-	update_uwp_charge_spirals(charging_particle)
+	update_uwp_charge_animations(charging_particle)
 	
 func emit_charged_particle():
 	for particle in particles:
 		particle.visible = false
 	charged_particle.visible = true
 	uwp_diag("emit_charged_particle")
-	update_uwp_charge_spirals(charged_particle)
+	update_uwp_charge_animations(charged_particle)
 	
 func emit_supercharge_particle():
 	for particle in particles:
 		particle.visible = false
 	super_particle.visible = true
 	uwp_diag("emit_supercharge_particle")
-	update_uwp_charge_spirals(super_particle)
+	update_uwp_charge_animations(super_particle)
 	
 func stop_emission():
 	for particle in particles:
 		particle.visible = false
-	update_uwp_charge_spirals(null)
+	update_uwp_charge_animations(null)
 
-func update_uwp_charge_spirals(active_particle) -> void:
+func update_uwp_charge_animations(active_particle) -> void:
 	if not has_node("/root/UWPCompatibility"):
 		return
 	var compatibility = get_node("/root/UWPCompatibility")
@@ -231,7 +231,7 @@ func update_uwp_charge_spirals(active_particle) -> void:
 		return
 	compatibility.diag("charge update active=%s charge=%.3f level=%d executing=%s" % [active_particle.name if active_particle else "none", charged_time, get_charge_level(), str(executing)])
 	for particle in particles:
-		compatibility.set_charge_spiral_visible(particle, particle == active_particle)
+		compatibility.set_charge_animation_visible(particle, particle == active_particle)
 
 func uwp_diag(message: String) -> void:
 	if has_node("/root/UWPCompatibility") and get_node("/root/UWPCompatibility").is_active():
