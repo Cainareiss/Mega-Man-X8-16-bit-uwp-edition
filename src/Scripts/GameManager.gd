@@ -1,8 +1,9 @@
 extends Node
 
 const codename := "X8FC"
-const version := "1.0.0.9"
+const version := "1.0.0.15"
 const current_demo := "16-bit"
+const BASE_FRAME_RATE := 60
 
 var player : Character
 var camera : Camera2D
@@ -58,6 +59,11 @@ var last_player_position := Vector2.ZERO
 var lumine_boss_order : Array
 
 func _ready() -> void:
+	# Gameplay and physics in the original project are authored around a 60 Hz
+	# clock. Apply the policy before loading a save or entering the first scene so
+	# UWP/Xbox never starts uncapped and changes simulation timing.
+	Engine.target_fps = BASE_FRAME_RATE
+	Engine.set_iterations_per_second(BASE_FRAME_RATE)
 	print ("GameManager: Initializing...")
 	set_pause_mode(2)
 	BossRNG.initialize()

@@ -996,6 +996,7 @@ script = ExtResource( 83 )
 position = Vector2( 1720, -88 )
 able_to_open = false
 able_to_explode = false
+unlock_source = NodePath("../VileSpawner")
 
 [node name="CameraTranslator" type="Node" parent="Scenery/RoomVile/VileExitDoor"]
 script = ExtResource( 49 )

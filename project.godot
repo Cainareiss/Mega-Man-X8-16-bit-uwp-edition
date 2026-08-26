@@ -1006,12 +1006,12 @@ _global_script_class_icons={
 
 config/name="Mega Man X8 16-bit"
 run/main_scene="res://src/Title/DisclaimerScreen.tscn"
-run/low_processor_mode=true
 boot_splash/show_image=false
 boot_splash/image="res://src/Screens/bootsplash.png"
 boot_splash/use_filter=false
 boot_splash/bg_color=Color( 0, 0, 0, 1 )
 config/icon="res://icon.png"
+run/target_fps=60
 
 [aseprite_animation_importer]
 

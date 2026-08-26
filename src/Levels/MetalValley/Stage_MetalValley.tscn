@@ -658,6 +658,7 @@ scale = Vector2( -1, 1 )
 able_to_open = false
 able_to_explode = false
 alternate_sprite_frames = ExtResource( 20 )
+unlock_source = NodePath("../../Enemies/GiantMechaniloid")
 
 [node name="CameraTranslator" type="Node" parent="Objects/BossDoor1" index="7"]
 script = ExtResource( 32 )

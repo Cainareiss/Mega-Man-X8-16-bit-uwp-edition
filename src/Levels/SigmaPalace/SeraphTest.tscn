@@ -684,6 +684,7 @@ skip_intro = false
 position = Vector2( 4200, -232 )
 able_to_open = false
 able_to_explode = false
+unlock_source = NodePath("../MidfightVileSpawner")
 
 [node name="CameraTranslator" type="Node" parent="Objects/VileExitDoor" index="7"]
 script = ExtResource( 62 )

@@ -44,6 +44,67 @@ jobs:
           echo "appx_path=$appx" >> "$GITHUB_OUTPUT"
           echo "Pacote encontrado: $appx"
 
+      - name: Validar identidade e icones Xbox do pacote
+        shell: bash
+        run: |
+          python3 - "${{ steps.find_appx.outputs.appx_path }}" <<'PY'
+          import re
+          import struct
+          import sys
+          import xml.etree.ElementTree as ET
+          import zipfile
+
+          package_path = sys.argv[1]
+          expected_assets = {
+              "Assets/StoreLogo.png": (50, 50),
+              "Assets/Square44x44Logo.png": (44, 44),
+              "Assets/Square71x71Logo.png": (71, 71),
+              "Assets/Square150x150Logo.png": (150, 150),
+              "Assets/Square310x310Logo.png": (310, 310),
+              "Assets/Wide310x150Logo.png": (310, 150),
+              "Assets/SplashScreen.png": (620, 300),
+          }
+          with zipfile.ZipFile(package_path) as package:
+              manifest = ET.fromstring(package.read("AppxManifest.xml"))
+              for asset_path, expected_size in expected_assets.items():
+                  data = package.read(asset_path)
+                  if data[:8] != b"\x89PNG\r\n\x1a\n":
+                      raise SystemExit(f"Not a PNG: {asset_path}")
+                  actual_size = struct.unpack(">II", data[16:24])
+                  if actual_size != expected_size:
+                      raise SystemExit(f"Wrong size for {asset_path}: {actual_size}")
+
+          foundation = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+          uap = "http://schemas.microsoft.com/appx/manifest/uap/windows10"
+          identity = manifest.find(f"{{{foundation}}}Identity")
+          if identity.attrib["Name"] != "AlyssonDaPaz.MegaManX816bit":
+              raise SystemExit("Unexpected package identity")
+          if identity.attrib["Publisher"] != "CN=AlyssonDaPaz":
+              raise SystemExit("Alysson da Paz is not the package publisher")
+
+          preset = open("export_presets.cfg", encoding="utf-8").read()
+          parts = [re.search(rf"version/{name}=(\d+)", preset).group(1)
+                   for name in ("major", "minor", "build", "revision")]
+          expected_version = ".".join(parts)
+          if identity.attrib["Version"] != expected_version:
+              raise SystemExit(f"Manifest version {identity.attrib['Version']} != {expected_version}")
+
+          visual = manifest.find(f".//{{{uap}}}VisualElements")
+          tile = visual.find(f"{{{uap}}}DefaultTile")
+          splash = visual.find(f"{{{uap}}}SplashScreen")
+          expected_manifest_paths = {
+              visual.attrib["Square44x44Logo"],
+              visual.attrib["Square150x150Logo"],
+              tile.attrib["Square71x71Logo"],
+              tile.attrib["Square310x310Logo"],
+              tile.attrib["Wide310x150Logo"],
+              splash.attrib["Image"],
+          }
+          if any(not path.startswith("Assets\\") for path in expected_manifest_paths):
+              raise SystemExit("A package visual still points outside the custom Assets directory")
+          print(f"Validated {len(expected_assets)} Xbox identity images and version {expected_version}")
+          PY
+
       - name: Subir o pacote nao assinado como artefato
         uses: actions/upload-artifact@v4
         with:
