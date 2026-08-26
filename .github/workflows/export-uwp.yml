@@ -123,6 +123,9 @@ jobs:
     steps:
       - name: Checkout do repositorio
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: uwp_assets
+          sparse-checkout-cone-mode: true
 
       - name: Baixar o pacote nao assinado
         uses: actions/download-artifact@v4
