@@ -121,6 +121,9 @@ jobs:
     needs: export_uwp
     runs-on: windows-latest
     steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+
       - name: Baixar o pacote nao assinado
         uses: actions/download-artifact@v4
         with:
@@ -173,6 +176,17 @@ jobs:
           Remove-Item -LiteralPath (Join-Path $repack "AppxBlockMap.xml") -Force -ErrorAction SilentlyContinue
           Remove-Item -LiteralPath (Join-Path $repack "[Content_Types].xml") -Force -ErrorAction SilentlyContinue
 
+          $assetSource = Join-Path $PWD "uwp_assets"
+          $assetTarget = Join-Path $repack "Assets"
+          Copy-Item -Path (Join-Path $assetSource "*.png") -Destination $assetTarget -Force
+          Get-ChildItem -LiteralPath $assetSource -Filter "*.png" | ForEach-Object {
+            $target = Join-Path $assetTarget $_.Name
+            if ((Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash -ne
+                (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash) {
+              throw "Falha ao copiar a identidade visual UWP: $($_.Name)"
+            }
+          }
+
           & $makeAppx pack /d $repack /p $msix /o
           if ($LASTEXITCODE -ne 0 -or -not (Test-Path $msix)) {
             Write-Error "MakeAppx repack falhou."
@@ -190,6 +204,32 @@ jobs:
             exit 1
           }
           & $signtool.FullName sign /fd SHA256 /a /f "MegaManX8Test.pfx" /p "teste1234" "${{ steps.repack_msix.outputs.msix_path }}"
+
+      - name: Validar arte final dentro do MSIX
+        shell: pwsh
+        run: |
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $package = [System.IO.Compression.ZipFile]::OpenRead("${{ steps.repack_msix.outputs.msix_path }}")
+          try {
+            Get-ChildItem -LiteralPath "uwp_assets" -Filter "*.png" | ForEach-Object {
+              $entry = $package.GetEntry("Assets/$($_.Name)")
+              if (-not $entry) { throw "Icone ausente no MSIX: $($_.Name)" }
+              $memory = [System.IO.MemoryStream]::new()
+              try {
+                $stream = $entry.Open()
+                try { $stream.CopyTo($memory) } finally { $stream.Dispose() }
+                $sha = [System.Security.Cryptography.SHA256]::Create()
+                try {
+                  $packageHash = [System.BitConverter]::ToString($sha.ComputeHash($memory.ToArray())).Replace("-", "")
+                } finally { $sha.Dispose() }
+              } finally { $memory.Dispose() }
+              $sourceHash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+              if ($packageHash -ne $sourceHash) { throw "Arte incorreta no MSIX: $($_.Name)" }
+            }
+          } finally {
+            $package.Dispose()
+          }
+          Write-Host "Os 7 assets UWP/Xbox correspondem aos PNGs do X."
 
       - name: Subir pacote assinado + certificado
         uses: actions/upload-artifact@v4
