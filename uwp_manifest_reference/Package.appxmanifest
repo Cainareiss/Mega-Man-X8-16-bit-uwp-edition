@@ -33,7 +33,7 @@
   <Identity
     Name="AlyssonDaPaz.MegaManX816bit"
     Publisher="CN=AlyssonDaPaz"
-    Version="1.0.0.15"
+    Version="1.0.0.16"
     ProcessorArchitecture="x64" />
 
   <mp:PhoneIdentity PhoneProductId="6a145a6d-e1c7-4cfd-b58f-641c7d665436" PhonePublisherId="00000000-0000-0000-0000-000000000000" />

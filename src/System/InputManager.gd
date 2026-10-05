@@ -107,7 +107,6 @@ func load_modified_keys(new_keys) -> void:
 			var new_key = str2var(new_keys[action][0])
 			var current_key = get_default_key(actual_action,str2var(new_keys[action][1]))
 			set_new_action_event(actual_action,new_key,current_key)
-		Savefile.save() #TODO: Investigar o porquê desse save
 	else:
 		modified_keys.clear()
 		push_warning("No Loading. Keys: " + str(new_keys))

@@ -1,0 +1,18 @@
+config_version=4
+
+[application]
+config/name="MMX UWP Save Regression"
+run/main_scene="res://Validation.tscn"
+
+[autoload]
+GameManager="*res://StateStub.gd"
+InputManager="*res://StateStub.gd"
+Achievements="*res://StateStub.gd"
+GatewayManager="*res://StateStub.gd"
+IGT="*res://StateStub.gd"
+Configurations="*res://GlobalVariables.gd"
+GlobalVariables="*res://GlobalVariables.gd"
+Savefile="*res://Savefile.gd"
+
+[rendering]
+quality/driver/driver_name="GLES2"

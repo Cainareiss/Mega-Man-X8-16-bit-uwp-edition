@@ -18,11 +18,8 @@ Write-Host "Importing test certificate..."
 Import-Certificate -FilePath $cer -CertStoreLocation Cert:\CurrentUser\Root | Out-Null
 Import-Certificate -FilePath $cer -CertStoreLocation Cert:\CurrentUser\TrustedPeople | Out-Null
 
-$existing = Get-AppxPackage -Name $PackageName -ErrorAction SilentlyContinue
-if ($existing) {
-    Write-Host "Removing previous package..."
-    $existing | Remove-AppxPackage
-}
+# Add-AppxPackage updates the existing identity while preserving LocalState.
+# Removing the previous package deletes the player's save and preferences.
 
 Write-Host "Installing UWP dependencies..."
 Get-ChildItem $dependencies -Filter "*.appx" | ForEach-Object {

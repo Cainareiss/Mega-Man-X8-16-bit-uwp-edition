@@ -1,7 +1,7 @@
 extends Node
 
 const codename := "X8FC"
-const version := "1.0.0.15"
+const version := "1.0.0.16"
 const current_demo := "16-bit"
 const BASE_FRAME_RATE := 60
 
@@ -337,10 +337,12 @@ func add_collectible_to_savedata(collectible : String):
 		collectibles.append(collectible)
 	else:
 		reposition_collectible_in_savedata(collectible)
+	Savefile.queue_save()
 
 func remove_collectible_from_savedata(collectible : String):
 	if is_collectible_in_savedata(collectible):
 		collectibles.erase(collectible)
+		Savefile.queue_save()
 
 func is_collectible_in_savedata(collectible : String) -> bool:
 	return collectible in collectibles

@@ -19,6 +19,7 @@ func add(key,value) -> void:
 func erase(key) -> void:
 	if exists(key):
 		variables.erase(key)
+		emit_signal("value_changed",key)
 
 func get(key):
 	#print("GlobalVariables: Trying to get key: " + key)

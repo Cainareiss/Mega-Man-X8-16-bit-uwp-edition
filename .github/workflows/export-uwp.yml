@@ -31,6 +31,23 @@ jobs:
           use_godot_3: true
           use_preset_export_path: true
 
+      - name: Validar persistencia do save entre processos
+        shell: bash
+        run: |
+          fixture="$RUNNER_TEMP/save-regression"
+          mkdir -p "$fixture/src/System"
+          cp tools/save_tests/* "$fixture/"
+          cp src/System/Savefile.gd src/System/GlobalVariables.gd "$fixture/"
+          cp src/System/SaveStorage.gd "$fixture/src/System/"
+          godot="$(find "$HOME/.local/share/godot" -type f -name '*headless.64' | head -n 1)"
+          test -x "$godot"
+          for phase in write read; do
+            MMX_SAVE_TEST_PHASE="$phase" "$godot" --path "$fixture" --audio-driver Dummy > "$fixture/$phase.log" 2>&1
+            cat "$fixture/$phase.log"
+            grep -F "SAVE REGRESSION phase=$phase failures=0" "$fixture/$phase.log"
+            if grep -E 'SCRIPT ERROR|Parse Error' "$fixture/$phase.log"; then exit 1; fi
+          done
+
       - name: Localizar pacote UWP exportado
         id: find_appx
         shell: bash
